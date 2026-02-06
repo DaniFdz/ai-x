@@ -10,19 +10,11 @@ function ensureConfigDir(): void {
   fs.mkdirSync(CONFIG_DIR, { recursive: true });
 }
 
-export interface CookieSourceCredentials {
-  method: "cookie-source";
-  cookieSource: string;
-  chromeProfileDir?: string;
-}
-
-export interface TokenCredentials {
+export interface Credentials {
   method: "tokens";
   authToken: string;
   ct0: string;
 }
-
-export type Credentials = CookieSourceCredentials | TokenCredentials;
 
 export function readCredentials(): Credentials | null {
   try {
