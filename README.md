@@ -54,6 +54,16 @@ This opens an interactive terminal UI powered by pi. On first launch, the agent 
 
 The agent learns your interests over time. It remembers which topics you care about, your preferred accounts, and how detailed you like your summaries.
 
+## How it works
+
+![ai-x agent flow](docs/flow.png)
+
+1. On launch, the agent checks for Twitter/X credentials and walks you through setup if needed
+2. It reads your saved preferences from previous sessions
+3. You ask questions naturally — the agent picks the right tools automatically
+4. Results are summarized and personalized based on your interests
+5. The agent silently learns your preferences over time
+
 ## Architecture
 
 ![ai-x system architecture](docs/architecture.png)
