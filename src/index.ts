@@ -21,10 +21,10 @@ async function main() {
   const authStorage = new AuthStorage();
   const modelRegistry = new ModelRegistry(authStorage);
 
-  const model = getModel("anthropic", "claude-sonnet-4-5");
+  const model = getModel("anthropic", "claude-opus-4-5");
   if (!model) {
     console.error(
-      "Could not find model claude-sonnet-4-5. Make sure you have an Anthropic API key set."
+      "Could not find model claude-opus-4-5. Make sure you have an Anthropic API key set."
     );
     console.error("Set it via: export ANTHROPIC_API_KEY=sk-ant-...");
     process.exit(1);
@@ -38,6 +38,7 @@ async function main() {
 
   const { session } = await createAgentSession({
     model,
+    thinkingLevel: "low",
     tools: tools as any,
     authStorage,
     modelRegistry,
