@@ -37,56 +37,82 @@ async function main() {
   console.log("\n  ai-x — setup\n");
 
   const existing = readCredentials();
-  if (existing) {
-    console.log("  Found existing credentials");
-    console.log("  Verifying Twitter...");
-    const result = await verifyTwitter(existing.authToken, existing.ct0);
-    if (result.valid && existing.anthropicApiKey) {
-      console.log(`  Twitter: ${result.account}`);
-      console.log(`  Anthropic API key: ${"*".repeat(8)}...${existing.anthropicApiKey.slice(-4)}`);
-      console.log(`  Stored at: ${CREDENTIALS_PATH}\n`);
-      return;
+
+  // Check what we already have
+  let anthropicApiKey = existing?.anthropicApiKey || "";
+  let authToken = existing?.authToken || "";
+  let ct0 = existing?.ct0 || "";
+  let twitterValid = false;
+  let twitterAccount = "";
+
+  // Verify existing Twitter credentials if present
+  if (authToken && ct0) {
+    console.log("  Checking Twitter credentials...");
+    const result = await verifyTwitter(authToken, ct0);
+    if (result.valid) {
+      twitterValid = true;
+      twitterAccount = result.account || "";
+      console.log(`  Twitter: ${twitterAccount} ✓`);
+    } else {
+      console.log(`  Twitter: invalid (${result.error})`);
+      authToken = "";
+      ct0 = "";
     }
-    console.log(`  Credentials incomplete or invalid.`);
-    console.log("  Let's set up new ones.\n");
   }
 
-  // Anthropic API key
-  console.log("  1. Anthropic API key");
-  console.log("  Get one at https://console.anthropic.com/settings/keys\n");
-  const anthropicApiKey = await ask("  API key: ");
+  if (anthropicApiKey) {
+    console.log(`  Anthropic API key: ********...${anthropicApiKey.slice(-4)} ✓`);
+  }
+
+  // If everything is valid, we're done
+  if (twitterValid && anthropicApiKey) {
+    console.log(`\n  All good! Stored at: ${CREDENTIALS_PATH}\n`);
+    return;
+  }
+
+  console.log("");
+
+  // Ask for what's missing
   if (!anthropicApiKey) {
-    console.error("\n  Anthropic API key is required.");
-    process.exit(1);
+    console.log("  Anthropic API key");
+    console.log("  Get one at https://console.anthropic.com/settings/keys\n");
+    anthropicApiKey = await ask("  API key: ");
+    if (!anthropicApiKey) {
+      console.error("\n  Anthropic API key is required.");
+      process.exit(1);
+    }
+    console.log("");
   }
 
-  // Twitter credentials
-  console.log("\n  2. Twitter/X credentials");
-  console.log("  Open x.com → DevTools → Application → Cookies → x.com");
-  console.log("  Copy the values for auth_token and ct0\n");
+  if (!twitterValid) {
+    console.log("  Twitter/X credentials");
+    console.log("  Open x.com → DevTools → Application → Cookies → x.com");
+    console.log("  Copy the values for auth_token and ct0\n");
 
-  const authToken = await ask("  auth_token: ");
-  const ct0 = await ask("  ct0: ");
+    authToken = await ask("  auth_token: ");
+    ct0 = await ask("  ct0: ");
 
-  if (!authToken || !ct0) {
-    console.error("\n  Both auth_token and ct0 are required.");
-    process.exit(1);
-  }
+    if (!authToken || !ct0) {
+      console.error("\n  Both auth_token and ct0 are required.");
+      process.exit(1);
+    }
 
-  console.log("\n  Verifying Twitter...");
-  const result = await verifyTwitter(authToken, ct0);
+    console.log("\n  Verifying Twitter...");
+    const result = await verifyTwitter(authToken, ct0);
 
-  if (!result.valid) {
-    console.error(`\n  Twitter auth failed: ${result.error}`);
-    console.error("  Check your credentials and try again.");
-    process.exit(1);
+    if (!result.valid) {
+      console.error(`\n  Twitter auth failed: ${result.error}`);
+      console.error("  Check your credentials and try again.");
+      process.exit(1);
+    }
+    twitterAccount = result.account || "";
   }
 
   const creds: Credentials = { method: "tokens", authToken, ct0, anthropicApiKey };
   saveCredentials(creds);
 
-  console.log(`  Twitter: ${result.account}`);
-  console.log(`  Anthropic API key: ${"*".repeat(8)}...${anthropicApiKey.slice(-4)}`);
+  console.log(`\n  Twitter: ${twitterAccount}`);
+  console.log(`  Anthropic API key: ********...${anthropicApiKey.slice(-4)}`);
   console.log(`  Saved to: ${CREDENTIALS_PATH}\n`);
   console.log("  Run 'npm start' to launch ai-x.\n");
 }
