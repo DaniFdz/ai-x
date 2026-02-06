@@ -40,11 +40,21 @@ npm install
 
 ## Usage
 
+First, authenticate with Twitter/X:
+
+```bash
+npm run auth
+```
+
+This guides you through credential setup — either browser cookies (easiest) or manual tokens. Credentials are stored in `~/.config/x-ai/credentials.json`.
+
+Then launch the agent:
+
 ```bash
 npm start
 ```
 
-This opens an interactive terminal UI powered by pi. On first launch, the agent will ask you to set up Twitter/X credentials — either via browser cookies (easiest) or manual tokens.
+The agent will refuse to start without valid credentials — no hallucinated tweets.
 
 ### Example conversations
 
@@ -62,8 +72,8 @@ The agent learns your interests over time. It remembers which topics you care ab
 
 ![ai-x agent flow](docs/flow.png)
 
-1. On launch, the agent checks for Twitter/X credentials and walks you through setup if needed
-2. It reads your saved preferences from previous sessions
+1. `npm run auth` sets up Twitter/X credentials (required, enforced at startup)
+2. On launch, the agent reads your saved preferences from previous sessions
 3. You ask questions naturally — the agent picks the right tools automatically
 4. Results are summarized and personalized based on your interests
 5. The agent silently learns your preferences over time
@@ -72,11 +82,10 @@ The agent learns your interests over time. It remembers which topics you care ab
 
 ![ai-x system architecture](docs/architecture.png)
 
-The agent runs inside a pi SDK session with **only 8 custom tools** — no `bash`, `read`, `write`, or `edit`:
+The agent runs inside a pi SDK session with **only 7 custom tools** — no `bash`, `read`, `write`, or `edit`:
 
 | Tool | What it does |
 |------|-------------|
-| `manage_credentials` | Check/save Twitter auth (stored in `~/.config/x-ai/credentials.json`) |
 | `search_twitter` | Search tweets by query |
 | `read_timeline` | Read your home timeline (Following or For You) |
 | `read_tweet` | Read a specific tweet, thread, or its replies |
