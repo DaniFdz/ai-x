@@ -17,14 +17,14 @@ function ask(question: string): Promise<string> {
   });
 }
 
-function verifyCredentials(creds: Credentials): Promise<{ valid: boolean; account?: string; error?: string }> {
+function tryOnce(creds: Credentials): Promise<{ valid: boolean; account?: string; error?: string }> {
   const authArgs =
     creds.method === "cookie-source"
       ? `--cookie-source '${creds.cookieSource}'${creds.chromeProfileDir ? ` --chrome-profile-dir '${creds.chromeProfileDir}'` : ""}`
       : `--auth-token '${creds.authToken}' --ct0 '${creds.ct0}'`;
 
   return new Promise((resolve) => {
-    exec(`bird whoami ${authArgs}`, { timeout: 15000 }, (error, stdout, stderr) => {
+    exec(`bird whoami ${authArgs}`, { timeout: 5000 }, (error, stdout, stderr) => {
       if (error) {
         resolve({ valid: false, error: stderr || error.message });
       } else {
@@ -34,13 +34,35 @@ function verifyCredentials(creds: Credentials): Promise<{ valid: boolean; accoun
   });
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function verifyCredentials(creds: Credentials): Promise<{ valid: boolean; account?: string; error?: string }> {
+  const maxAttempts = 20;
+  let lastError = "";
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const result = await tryOnce(creds);
+    if (result.valid) return result;
+    lastError = result.error || "Unknown error";
+    if (i < maxAttempts - 1) {
+      process.stdout.write(`\r  Waiting for access... (${i + 1}/${maxAttempts}s)`);
+      await sleep(1000);
+    }
+  }
+
+  process.stdout.write("\n");
+  return { valid: false, error: lastError };
+}
+
 async function main() {
   console.log("\n  ai-x — Twitter/X credential setup\n");
 
   const existing = readCredentials();
   if (existing) {
     console.log(`  Found existing credentials (${existing.method})`);
-    console.log("  Verifying...");
+    console.log("  Verifying (approve Keychain access if prompted)...");
     const result = await verifyCredentials(existing);
     if (result.valid) {
       console.log(`  Authenticated as: ${result.account}`);
@@ -90,7 +112,7 @@ async function main() {
     };
   }
 
-  console.log("\n  Verifying...");
+  console.log("\n  Verifying (approve Keychain access if prompted)...");
   const result = await verifyCredentials(creds);
 
   if (!result.valid) {
