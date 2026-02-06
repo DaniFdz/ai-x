@@ -1,0 +1,48 @@
+import {
+  createAgentSession,
+  AuthStorage,
+  ModelRegistry,
+  DefaultResourceLoader,
+  InteractiveMode,
+} from "@mariozechner/pi-coding-agent";
+import { getModel } from "@mariozechner/pi-ai";
+import { tools } from "./tools/index.js";
+import { SYSTEM_PROMPT } from "./system-prompt.js";
+import { CONFIG_DIR } from "./config.js";
+
+async function main() {
+  const authStorage = new AuthStorage();
+  const modelRegistry = new ModelRegistry(authStorage);
+
+  const model = getModel("anthropic", "claude-sonnet-4-5");
+  if (!model) {
+    console.error(
+      "Could not find model claude-sonnet-4-5. Make sure you have an Anthropic API key set."
+    );
+    console.error("Set it via: export ANTHROPIC_API_KEY=sk-ant-...");
+    process.exit(1);
+  }
+
+  const resourceLoader = new DefaultResourceLoader({
+    agentDir: CONFIG_DIR,
+    systemPrompt: SYSTEM_PROMPT,
+  });
+  await resourceLoader.reload();
+
+  const { session } = await createAgentSession({
+    model,
+    tools: tools as any,
+    authStorage,
+    modelRegistry,
+    agentDir: CONFIG_DIR,
+    resourceLoader,
+  });
+
+  const mode = new InteractiveMode(session);
+  await mode.run();
+}
+
+main().catch((err) => {
+  console.error("Fatal error:", err.message);
+  process.exit(1);
+});
