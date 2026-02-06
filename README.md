@@ -54,7 +54,9 @@ This opens an interactive terminal UI powered by pi. On first launch, the agent 
 
 The agent learns your interests over time. It remembers which topics you care about, your preferred accounts, and how detailed you like your summaries.
 
-## How it works
+## Architecture
+
+![ai-x system architecture](docs/architecture.png)
 
 The agent runs inside a pi SDK session with **only 8 custom tools** — no `bash`, `read`, `write`, or `edit`:
 
