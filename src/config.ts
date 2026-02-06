@@ -14,6 +14,7 @@ export interface Credentials {
   method: "tokens";
   authToken: string;
   ct0: string;
+  anthropicApiKey: string;
 }
 
 export function readCredentials(): Credentials | null {

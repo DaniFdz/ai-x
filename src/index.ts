@@ -14,20 +14,19 @@ import { CONFIG_DIR, readCredentials } from "./config.js";
 async function main() {
   const creds = readCredentials();
   if (!creds) {
-    console.error("\n  No Twitter/X credentials found.");
+    console.error("\n  No credentials found.");
     console.error("  Run 'npm run auth' to set up authentication first.\n");
     process.exit(1);
   }
 
-  const authStorage = new AuthStorage(path.join(CONFIG_DIR, "auth.json"));
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.error("\n  No ANTHROPIC_API_KEY environment variable found.");
-    console.error("  Set it via: export ANTHROPIC_API_KEY=sk-ant-...\n");
+  if (!creds.anthropicApiKey) {
+    console.error("\n  No Anthropic API key in credentials.");
+    console.error("  Run 'npm run auth' to reconfigure.\n");
     process.exit(1);
   }
-  authStorage.setRuntimeApiKey("anthropic", apiKey);
+
+  const authStorage = new AuthStorage(path.join(CONFIG_DIR, "auth.json"));
+  authStorage.setRuntimeApiKey("anthropic", creds.anthropicApiKey);
 
   const modelRegistry = new ModelRegistry(authStorage);
 

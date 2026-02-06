@@ -17,10 +17,10 @@ function ask(question: string): Promise<string> {
   });
 }
 
-function verifyCredentials(creds: Credentials): Promise<{ valid: boolean; account?: string; error?: string }> {
+function verifyTwitter(authToken: string, ct0: string): Promise<{ valid: boolean; account?: string; error?: string }> {
   return new Promise((resolve) => {
     exec(
-      `bird whoami --auth-token '${creds.authToken}' --ct0 '${creds.ct0}'`,
+      `bird whoami --auth-token '${authToken}' --ct0 '${ct0}'`,
       { timeout: 15000 },
       (error, stdout, stderr) => {
         if (error) {
@@ -34,22 +34,34 @@ function verifyCredentials(creds: Credentials): Promise<{ valid: boolean; accoun
 }
 
 async function main() {
-  console.log("\n  ai-x — Twitter/X credential setup\n");
+  console.log("\n  ai-x — setup\n");
 
   const existing = readCredentials();
   if (existing) {
     console.log("  Found existing credentials");
-    console.log("  Verifying...");
-    const result = await verifyCredentials(existing);
-    if (result.valid) {
-      console.log(`  Authenticated as: ${result.account}`);
+    console.log("  Verifying Twitter...");
+    const result = await verifyTwitter(existing.authToken, existing.ct0);
+    if (result.valid && existing.anthropicApiKey) {
+      console.log(`  Twitter: ${result.account}`);
+      console.log(`  Anthropic API key: ${"*".repeat(8)}...${existing.anthropicApiKey.slice(-4)}`);
       console.log(`  Stored at: ${CREDENTIALS_PATH}\n`);
       return;
     }
-    console.log(`  Credentials invalid: ${result.error}`);
+    console.log(`  Credentials incomplete or invalid.`);
     console.log("  Let's set up new ones.\n");
   }
 
+  // Anthropic API key
+  console.log("  1. Anthropic API key");
+  console.log("  Get one at https://console.anthropic.com/settings/keys\n");
+  const anthropicApiKey = await ask("  API key: ");
+  if (!anthropicApiKey) {
+    console.error("\n  Anthropic API key is required.");
+    process.exit(1);
+  }
+
+  // Twitter credentials
+  console.log("\n  2. Twitter/X credentials");
   console.log("  Open x.com → DevTools → Application → Cookies → x.com");
   console.log("  Copy the values for auth_token and ct0\n");
 
@@ -61,19 +73,20 @@ async function main() {
     process.exit(1);
   }
 
-  const creds: Credentials = { method: "tokens", authToken, ct0 };
-
-  console.log("\n  Verifying...");
-  const result = await verifyCredentials(creds);
+  console.log("\n  Verifying Twitter...");
+  const result = await verifyTwitter(authToken, ct0);
 
   if (!result.valid) {
-    console.error(`\n  Authentication failed: ${result.error}`);
+    console.error(`\n  Twitter auth failed: ${result.error}`);
     console.error("  Check your credentials and try again.");
     process.exit(1);
   }
 
+  const creds: Credentials = { method: "tokens", authToken, ct0, anthropicApiKey };
   saveCredentials(creds);
-  console.log(`  Authenticated as: ${result.account}`);
+
+  console.log(`  Twitter: ${result.account}`);
+  console.log(`  Anthropic API key: ${"*".repeat(8)}...${anthropicApiKey.slice(-4)}`);
   console.log(`  Saved to: ${CREDENTIALS_PATH}\n`);
   console.log("  Run 'npm start' to launch ai-x.\n");
 }
