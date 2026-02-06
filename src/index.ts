@@ -52,10 +52,6 @@ async function main() {
     resourceLoader,
   });
 
-  // Trigger the agent's greeting before the TUI starts so the user
-  // sees suggestions immediately without having to type first.
-  await session.prompt("hello");
-
   const mode = new InteractiveMode(session);
   await mode.run();
 }
