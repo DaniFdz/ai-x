@@ -8,6 +8,7 @@ import {
 import { getModel } from "@mariozechner/pi-ai";
 import { tools } from "./tools/index.js";
 import { SYSTEM_PROMPT } from "./system-prompt.js";
+import path from "path";
 import { CONFIG_DIR, readCredentials } from "./config.js";
 
 async function main() {
@@ -18,15 +19,21 @@ async function main() {
     process.exit(1);
   }
 
-  const authStorage = new AuthStorage();
+  const authStorage = new AuthStorage(path.join(CONFIG_DIR, "auth.json"));
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.error("\n  No ANTHROPIC_API_KEY environment variable found.");
+    console.error("  Set it via: export ANTHROPIC_API_KEY=sk-ant-...\n");
+    process.exit(1);
+  }
+  authStorage.setRuntimeApiKey("anthropic", apiKey);
+
   const modelRegistry = new ModelRegistry(authStorage);
 
   const model = getModel("anthropic", "claude-opus-4-5");
   if (!model) {
-    console.error(
-      "Could not find model claude-opus-4-5. Make sure you have an Anthropic API key set."
-    );
-    console.error("Set it via: export ANTHROPIC_API_KEY=sk-ant-...");
+    console.error("\n  Could not find model claude-opus-4-5.\n");
     process.exit(1);
   }
 
