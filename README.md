@@ -1,6 +1,10 @@
-# ai-x
+<p align="center">
+  <img src="docs/icon.png" alt="ai-x" width="200" />
+</p>
 
-A conversational AI agent that helps engineers stay up-to-date with AI news on Twitter/X — without doomscrolling.
+<h1 align="center">ai-x</h1>
+
+<p align="center">A conversational AI agent that helps engineers stay up-to-date with AI news on Twitter/X — without doomscrolling.</p>
 
 Built on [pi.dev](https://pi.dev/) SDK with a locked-down tool surface: the agent can only read Twitter and manage your preferences. No filesystem access, no arbitrary commands.
 
